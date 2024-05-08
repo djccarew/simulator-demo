@@ -1,5 +1,7 @@
 # Simulator Demo
 
+Copy env.example to .env and fill in the  values 
+
 Add the pip requirements and run the following 
 
 ```

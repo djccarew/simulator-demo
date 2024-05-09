@@ -31,7 +31,7 @@ model_id = os.getenv("GENAI_MODEL")
 default_model_parameters = {
     "decoding_method": "sample",
     "max_new_tokens": 200,
-    "temperature": 0.5,
+    "temperature": 0.2,
     "top_k": 50,
     "top_p": 1,
     "repetition_penalty": 1.05,
@@ -42,7 +42,7 @@ global player_profile_model_parameters
 player_profile_model_parameters = {
     "decoding_method": "sample",
     "max_new_tokens": 250,
-    "temperature": 0.5,
+    "temperature": 0.2,
     "top_k": 50,
     "top_p": 1,
     "repetition_penalty": 1.05,
@@ -85,16 +85,16 @@ single_threaded_tts_service.set_service_url(os.getenv("TTS_URL"))
 player_name = "Clive"
 
 player_profile_prompt_prefix = """
-You  are a golf commentator known for your humor and good natured teasing of the players.  Generate commentary without  extraneous actions or explanations.
+You are a golf commentator known for your golf knowledge. You are introducing a golf player as they are about to
+hit a shot at the 7th hole of the Pebble Beach Golf Links course . You will be given an input JSON containing information about the golf player. Use this information to output 4 full sentences of
+summary about the player. Do not use a player name. Use a formal personality with a good-natured sense of humors.
 
 Input: The following JSON is the data available about  an amateur golfer about to tee of at the iconic 7th hole at  Pebble Beach.
 Note that the handicap field in the JSON refers to the players handicap not the handicap index. 
 """
 
-player_profile_prompt_suffix = """Generate some brief,  good humored commentary as complete sentences,  to be broadcast  just before the golfer attempts the tee shot.  Use the appropriate fields in the JSON data  as needed. Limit commentary to no more than 6 sentences please.  
- Do not mention any PII (except for name and hometown) about the  player in the commentary. 
-
-Generate JSON output only using the following format:
+player_profile_prompt_suffix = """
+Output only the summary commentary in the following JSON structure: 
 {
 "commentary":"Generated commentary goes here"
 }
@@ -134,24 +134,14 @@ def delete_after_last_char(string, char):
     else:
         return string  # If the character is not found, return the original string
 
-# Add SSML for exclamation marks in text to synthesize
-def add_ssml_for_exclamation(text)->str:
-    # TO DO : Needs fleshing out. For now does nothing
-    return text
+# Add SSML to  text to synthesize
+def enhance_with_SSML(text)->str:
+    # For now just avoiding run ons where you expect a break 
+   
+    local_text = text.replace(' - ','<break strength="medium"/>')
+    local_text = local_text.replace('...','<break strength="medium"/>')
 
-    # ssml_enhanced = ''
-    # if "!" not in text:
-    #     return text
-    # else:
-    #     local_text = text.replace('...','$')
-    #     sentences = local_text.split(".")
-    #     for sentence in sentences:
-    #         parts = sentence.split('!')
-    #         snippet = ''
-    #         for in in range(len(parts))
-    #            snippet += '<emphasis level="strong">' + parts[i] + '!</emphasis>'
-    #         ssml_enhanced += 
-    #     return ssml_enhanced
+    return local_text
 
 
 
@@ -304,7 +294,7 @@ def generate_player_commentary(player_id, player_profile):
   response_dict = json.loads(delete_after_last_char(llm_response, '}'))
 
   logging.debug("Synthesizing player commentary ...")
-  ssml_enhanced = add_ssml_for_exclamation(response_dict['commentary'])
+  ssml_enhanced = enhance_with_SSML(response_dict['commentary'])
   logging.debug(f"SSML enhanced commentary = {ssml_enhanced}")
   local_start = time.perf_counter()
   multi_threaded_tts_service.synthesize_using_websocket(ssml_enhanced,  
@@ -389,5 +379,7 @@ def watsonx(ws):
 
 
 
+if __name__ == '__main__':
+    app.run(threaded=False, processes=6)
 
 

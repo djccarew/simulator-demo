@@ -161,5 +161,4 @@ cython_debug/
 
 .env
 
-audio/*
-!audio/init_commentary_*
+

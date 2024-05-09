@@ -42,7 +42,7 @@ global player_profile_model_parameters
 player_profile_model_parameters = {
     "decoding_method": "sample",
     "max_new_tokens": 250,
-    "temperature": 0.2,
+    "temperature": 0.4,
     "top_k": 50,
     "top_p": 1,
     "repetition_penalty": 1.05,
@@ -81,48 +81,24 @@ global single_threaded_tts_service
 single_threaded_tts_service = TextToSpeechV1(authenticator=iam_authenticator)
 single_threaded_tts_service.set_service_url(os.getenv("TTS_URL"))
 
-# TO DO get player name from shot data
-player_name = "Clive"
-
 player_profile_prompt_prefix = """
-You are a golf commentator known for your golf knowledge. You are introducing a golf player as they are about to
-hit a shot at the 7th hole of the Pebble Beach Golf Links course . You will be given an input JSON containing information about the golf player. Use this information to output 4 full sentences of
-summary about the player. Do not use a player name. Use a formal personality with a good-natured sense of humors.
+You are a golf commentator known for your golf knowledge. You are introducing a golf player as they are about to hit a shot at the 7th hole of the Pebble Beach Golf Links course . You will be given an input JSON containing information about the golf player. Use this information to output 4 full sentences of summary about the player. Do not use a player name. Use a formal personality with a good-natured sense of humor. Output only the summary commentary in the following JSON structure: {"commentary":"Generated commentary goes here"}
+Input:
 
-Input: The following JSON is the data available about  an amateur golfer about to tee of at the iconic 7th hole at  Pebble Beach.
-Note that the handicap field in the JSON refers to the players handicap not the handicap index. 
-"""
-
-player_profile_prompt_suffix = """
-Output only the summary commentary in the following JSON structure: 
-{
-"commentary":"Generated commentary goes here"
-}
-
-JSON: 
 """
 
 end_commentary_prompt_template="""
-You are a golf commentator known for your golf knowledge. You are providing commentary about a shot that has just been hit. Use this information to output 3 full
-sentences describing the shot's results as if commentating for a professional tournament. Use a formal, low-energy personality. Output only commentary
-about the shot's results. Assume the distance to the pin is in feet. 
-You can mention the anticipated next shot, or what is needed to finish the hole successfully.
+You are a golf commentator known for your golf knowledge. You are providing commentary about a shot that has just been hit. You will be given an input containing information about the shot results. Use this information to output 3 full sentences describing the shot's results. Do not use a player name. Assume the distance to pin is in feet. A Final Terrain Type of "water" or "bunker" is considered a bad shot and a hazard. A Final Terrain Type of "green" is considered a good shot. All other Final Terrain Types are considered average shots. Use a formal personality with a good-natured sense of humor. Output only the summary commentary in the following JSON structure: {"commentary":"Generated commentary goes here"}
 
 Input:
-Player Name: {player_name}
 Shot Number: 1
 Par: 3
 Final Terrain Type: {terrain_type}
 Distance to pin: {pin_distance}
 Shot Shape: {shot_shape}
 
+JSON:
 
-Generate JSON output only using the following format:
-{{
-"commentary":"Generated commentary goes here"
-}}
-
-JSON: 
 """
 final_commentary_file = ""
 
@@ -168,12 +144,14 @@ def get_shot_profile(payload_data):
 
 # Returns init commentary file based on shot profile
 def get_init_commentary_file(shot_profile):
-
-    # For now we assume it's a good shot and randomly pick one of the good shot commnentaries
-
     random_file_number = str(random.randint(1, 7))
 
-    return "audio/init_commentary_good" + random_file_number + ".wav"
+    if shot_profile['terrain_type'] == "green":
+        return "audio/good_" + random_file_number + ".mp3"
+    elif shot_profile['terrain_type'] == "water" or shot_profile['terrain_type'] == "tee_box" or shot_profile['terrain_type'] == "bunker":
+        return "audio/bad_" + random_file_number + ".mp3"
+    
+    return "audio/average_" + random_file_number + ".mp3"
 
 
 #  Wrapper to play audio in a blocking mode
@@ -286,7 +264,7 @@ def generate_player_commentary(player_id, player_profile):
   player_profile.pop('familyName', None)
 
   # Send to LLM to get text commentary
-  prompt = player_profile_prompt_prefix + json.dumps(player_profile) + '\n' +  player_profile_prompt_suffix
+  prompt = player_profile_prompt_prefix + json.dumps(player_profile) + '\n' +  "JSON:\n"
   llm_response = model.generate_text(prompt)
   logging.debug("*** Start LLM response  ***")
   logging.debug(f"LLM response = {llm_response}")

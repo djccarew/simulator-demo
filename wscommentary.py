@@ -388,7 +388,7 @@ def watsonx(ws):
             time_to_shot_complete  = shot_profile['shot_time'] - (time.perf_counter() - start)
 
         logging.debug(f"Starting end commentary with {time_to_shot_complete} secs before shot complete")                   
-        single_threaded_tts_service.synthesize_using_websocket(alternative_pronunciations(response_dict["commentary"]),
+        single_threaded_tts_service.synthesize_using_websocket(response_dict["commentary"],
                                                                tts_callback_live,
                                                                accept='audio/wav',
                                                                voice="en-US_EmmaExpressive")

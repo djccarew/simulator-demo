@@ -28,6 +28,7 @@ load_dotenv()
 
 global model_id
 model_id = os.getenv("GENAI_MODEL")
+customization_id = os.getenv("TTS_CUSTOMIZATION_ID")
 
 default_model_parameters = {
     "decoding_method": "sample",
@@ -100,7 +101,7 @@ Output only the summary commentary in the following JSON structure:
 JSON:
 """
 end_commentary_prompt_template="""
-You are a golf commentator known for your golf knowledge. You are providing commentary about a shot that has just been hit. You will be given an input containing information about the shot results. Use this information to output 3 full sentences describing the shot's results. Do not use a player name. Assume the distance to pin is in feet. A Final Terrain Type of "water" or "bunker" is considered a bad shot and a hazard. A Final Terrain Type of "green" is considered a good shot. All other Final Terrain Types are considered average shots. Use a formal personality with a good-natured sense of humor. Output only the summary commentary in the following JSON structure: {{"commentary":"Generated commentary goes here"}}
+You are a golf commentator known for your golf knowledge. You are providing commentary about a shot that has just been hit. You will be given an input containing information about the shot results. Use this information to output 3 full sentences describing the shot's results. Do not use a player name. Assume the distance to pin is in feet. A Final Terrain Type of "tee_box", "water", or "bunker" is considered a bad shot. A Final Terrain Type of "green" is considered a good shot. All other Final Terrain Types are considered average shots. Use a formal personality with a good-natured sense of humor. Output only the summary commentary in the following JSON structure: {{"commentary":"Generated commentary goes here"}}
 
 Input:
 Shot Number: 1
@@ -318,6 +319,7 @@ def generate_player_commentary(player_profile):
   multi_threaded_tts_service.synthesize_using_websocket(ssml_enhanced,  
                                                         multi_threaded_tts_callback_file,                                 
                                                         accept='audio/wav',
+                                                        customization_id=customization_id,
                                                         voice="en-US_EmmaExpressive")
   local_stop = time.perf_counter()
   logging.debug(f"Synthesizing player commentary took {local_stop-local_start} seconds")
@@ -391,6 +393,7 @@ def watsonx(ws):
         single_threaded_tts_service.synthesize_using_websocket(response_dict["commentary"],
                                                                tts_callback_live,
                                                                accept='audio/wav',
+                                                               customization_id=customization_id,
                                                                voice="en-US_EmmaExpressive")
                                             
                                 

@@ -89,7 +89,7 @@ Input:
 """
 
 end_commentary_prompt_template="""
-You are a golf commentator known for your golf knowledge. You are providing commentary about a shot that has just been hit. You will be given an input containing information about the shot results. Use this information to output 3 full sentences describing the shot's results. Do not use a player name. Assume the distance to pin is in feet. A Final Terrain Type of "water" or "bunker" is considered a bad shot and a hazard. A Final Terrain Type of "green" is considered a good shot. All other Final Terrain Types are considered average shots. Use a formal personality with a good-natured sense of humor. Output only the summary commentary in the following JSON structure: {"commentary":"Generated commentary goes here"}
+You are a golf commentator known for your golf knowledge. You are providing commentary about a shot that has just been hit. You will be given an input containing information about the shot results. Use this information to output 3 full sentences describing the shot's results. Do not use a player name. Assume the distance to pin is in feet. A Final Terrain Type of "water" or "bunker" is considered a bad shot and a hazard. A Final Terrain Type of "green" is considered a good shot. All other Final Terrain Types are considered average shots. Use a formal personality with a good-natured sense of humor. Output only the summary commentary in the following JSON structure: {{"commentary":"Generated commentary goes here"}}
 
 Input:
 Shot Number: 1
@@ -338,6 +338,7 @@ def watsonx(ws):
          wav_player = PlayWavFile(player_commentary_audio_file)
          wav_player.play()
          wav_player.close()
+
       elif payload_data["type"] == "shot_data": 
         logging.debug(f"Handling ws message type {payload_data['type']}")
         shot_profile = get_shot_profile(payload_data)

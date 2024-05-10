@@ -334,12 +334,10 @@ def watsonx(ws):
       if payload_data["type"] == "player_ready":
          # Player ready to take shot , play commentary 
          logging.debug(f"Handling ws message type {payload_data['type']}")
-         # Play user commentary 10 seconds after receiving this 
-         player_commentary_audio_file = 'audio/' + payload_data["user_profile"]["data"]["player_id"] + '.wav'
-         #logging.debug(f"Waiting {os.getenv('COMMENTARY_START_DELAY','10')} seconds before playing player commentary")
-         #time.sleep(int(os.getenv("COMMENTARY_START_DELAY","10")))
-         #playsound(player_commentary_audio_file, block=True)   
-
+         player_commentary_audio_file = 'audio/' + payload_data["user_profile"]["id"] + '.wav'
+         wav_player = PlayWavFile(player_commentary_audio_file)
+         wav_player.play()
+         wav_player.close()
       elif payload_data["type"] == "shot_data": 
         logging.debug(f"Handling ws message type {payload_data['type']}")
         shot_profile = get_shot_profile(payload_data)
@@ -352,8 +350,9 @@ def watsonx(ws):
         start = time.perf_counter()
        
        
-        prompt = end_commentary_prompt_template.format(shot_shape=shot_profile['shot_shape'], player_name=player_name,
-                                                       terrain_type=shot_profile['terrain_type'], pin_distance=str(shot_profile['pin_distance']/30.48) + ' ft')
+        prompt = end_commentary_prompt_template.format(shot_shape=shot_profile['shot_shape'], 
+                                                       terrain_type=shot_profile['terrain_type'],
+                                                       pin_distance=str(shot_profile['pin_distance']/30.48) + ' ft')
         logging.debug("*** Start prompt ***")
         logging.debug(prompt)
         logging.debug("*** End prompt ***")
@@ -384,6 +383,6 @@ def watsonx(ws):
 
 
 if __name__ == '__main__':
-    app.run(threaded=False, processes=6)
+    app.run(threaded=True)
 
 

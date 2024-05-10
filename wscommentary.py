@@ -52,7 +52,7 @@ player_profile_model_parameters = {
 
 
 global no_processing_required_types       
-no_processing_required_types = ["ping","shot_playback_done","selected_club","game_and_environment_data"]
+no_processing_required_types = ["ping","shot_playback_done","selected_club","game_and_environment_data","exit_match"]
 
 # Final commentary file
 
@@ -282,8 +282,8 @@ class FileSynthesizeCallback(SynthesizeCallback):
         self.wav.close()
 
 # Run asynchronously to generate the player commentary audio and save in a file
-def generate_player_commentary(player_id, player_profile):
-  multi_threaded_tts_callback_file = FileSynthesizeCallback(player_id)
+def generate_player_commentary(player_profile):
+  multi_threaded_tts_callback_file = FileSynthesizeCallback(player_profile['id'])
   multi_threaded_tts_service = TextToSpeechV1(authenticator=iam_authenticator) 
   multi_threaded_tts_service.set_service_url(os.getenv("TTS_PLAYER_PROFILE_URL"))
 
@@ -296,7 +296,10 @@ def generate_player_commentary(player_id, player_profile):
 
   # Remove unwanted keys before sending to LLM 
   player_profile.pop('id', None)
+  player_profile.pop('licenseAgreement', None)
+  player_profile.pop('birthYear', None)
   player_profile.pop('ballsLostPerRound', None)
+  player_profile.pop('givenName', None)
   player_profile.pop('displayName', None)
   player_profile.pop('familyName', None)
 
@@ -337,7 +340,8 @@ def watsonx(ws):
          # Player login received
          # Asynchronous generation of player profile
          logging.debug(f"Handling ws message type {payload_data['type']}")
-         thread = multiprocessing.Process(target=generate_player_commentary, args=(payload_data['user_profile']['id'], payload_data['user_profile']))
+         thread = multiprocessing.Process(target=generate_player_commentary, 
+                                          args=(payload_data['user_profile']['apex_preferences']['intro_data'],))
          thread.start()
          ws.send(f"Player commentary generating for player_id {payload_data['user_profile']['id']}")
          continue
@@ -355,7 +359,7 @@ def watsonx(ws):
         shot_profile = get_shot_profile(payload_data)
         init_commmentary_file = get_init_commentary_file(shot_profile)
      
-        logging.debug(f"playing clip {init_commmentary_file}.mp3")
+        logging.debug(f"playing clip {init_commmentary_file}")
         playsound(init_commmentary_file, block=False)
 
         logging.debug("Starting timer")

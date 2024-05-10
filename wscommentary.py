@@ -5,6 +5,7 @@ import time
 import random
 import multiprocessing
 import pyaudio
+import wave
 from playsound import playsound
 from flask import Flask
 from flask_sock import Sock
@@ -153,8 +154,35 @@ def get_init_commentary_file(shot_profile):
     
     return "audio/average_" + random_file_number + ".mp3"
 
+# Wrapper to play a .wav file synchronously using pyaudio
+class PlayWavFile:
+    chunk = 1024
 
-#  Wrapper to play audio in a blocking mode
+    def __init__(self, file):
+        """ Init audio stream """ 
+        self.wf = wave.open(file, 'rb')
+        self.p = pyaudio.PyAudio()
+        self.stream = self.p.open(
+            format = self.p.get_format_from_width(self.wf.getsampwidth()),
+            channels = self.wf.getnchannels(),
+            rate = self.wf.getframerate(),
+            output = True
+        )
+
+    def play(self):
+        """ Play entire file """
+        data = self.wf.readframes(self.chunk)
+        while data != b'':
+            self.stream.write(data)
+            data = self.wf.readframes(self.chunk)
+
+    def close(self):
+        """ Graceful shutdown """ 
+        self.stream.close()
+        self.p.terminate()
+
+
+#  Wrapper to play audio in a blocking mode for TTS web socket 
 class Play(object):
     """
     Wrapper to play the audio in a blocking mode
@@ -202,8 +230,6 @@ class LiveSynthesizeCallback(SynthesizeCallback):
 
     def on_connected(self):
         stop = time.perf_counter()
-        logging.debug(f"Opening stream to play. Elapsed time is {stop-start}")  
-        logging.debug(f"Stop is {stop}, start is {start}")  
         self.play.start_streaming()
 
     def on_error(self, error):
@@ -258,7 +284,7 @@ def generate_player_commentary(player_id, player_profile):
   )
 
   # Remove unwanted keys before sending to LLM 
-  player_profile.pop('player_id', None)
+  player_profile.pop('id', None)
   player_profile.pop('ballsLostPerRound', None)
   player_profile.pop('displayName', None)
   player_profile.pop('familyName', None)
@@ -296,30 +322,30 @@ def watsonx(ws):
           ws.send(f"{payload_data['type']} response")
           continue
       
-      if payload_data["type"] == "user_profile":
-         # Player profile received
-         # TO DO implement asynchronous generation of player profile
-         logging.debug(f"Handling ws message type {payload_data['type']}")
-         thread = multiprocessing.Process(target=generate_player_commentary, args=(payload_data['user_profile']['player_id'], payload_data['user_profile']))
-         thread.start()
-         ws.send(f"Player commentary generating for player_id {payload_data['user_profile']['player_id']}")
-         continue
-         
       if payload_data["type"] == "user_data":
          # Player login received
+         # Asynchronous generation of player profile
+         logging.debug(f"Handling ws message type {payload_data['type']}")
+         thread = multiprocessing.Process(target=generate_player_commentary, args=(payload_data['user_profile']['id'], payload_data['user_profile']))
+         thread.start()
+         ws.send(f"Player commentary generating for player_id {payload_data['user_profile']['id']}")
+         continue
+         
+      if payload_data["type"] == "player_ready":
+         # Player ready to take shot , play commentary 
          logging.debug(f"Handling ws message type {payload_data['type']}")
          # Play user commentary 10 seconds after receiving this 
          player_commentary_audio_file = 'audio/' + payload_data["user_profile"]["data"]["player_id"] + '.wav'
-         logging.debug(f"Waiting {os.getenv('COMMENTARY_START_DELAY','10')} seconds before playing player commentary")
-         time.sleep(int(os.getenv("COMMENTARY_START_DELAY","10")))
-         playsound(player_commentary_audio_file, block=True)   
+         #logging.debug(f"Waiting {os.getenv('COMMENTARY_START_DELAY','10')} seconds before playing player commentary")
+         #time.sleep(int(os.getenv("COMMENTARY_START_DELAY","10")))
+         #playsound(player_commentary_audio_file, block=True)   
 
       elif payload_data["type"] == "shot_data": 
         logging.debug(f"Handling ws message type {payload_data['type']}")
         shot_profile = get_shot_profile(payload_data)
         init_commmentary_file = get_init_commentary_file(shot_profile)
      
-        logging.debug(f"playing clip {init_commmentary_file}.wav")
+        logging.debug(f"playing clip {init_commmentary_file}.mp3")
         playsound(init_commmentary_file, block=False)
 
         logging.debug("Starting timer")

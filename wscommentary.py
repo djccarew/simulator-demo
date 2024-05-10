@@ -83,11 +83,22 @@ single_threaded_tts_service = TextToSpeechV1(authenticator=iam_authenticator)
 single_threaded_tts_service.set_service_url(os.getenv("TTS_URL"))
 
 player_profile_prompt_prefix = """
-You are a golf commentator known for your golf knowledge. You are introducing a golf player as they are about to hit a shot at the 7th hole of the Pebble Beach Golf Links course . You will be given an input JSON containing information about the golf player. Use this information to output 4 full sentences of summary about the player. Do not use a player name. Use a formal personality with a good-natured sense of humor. Output only the summary commentary in the following JSON structure: {"commentary":"Generated commentary goes here"}
-Input:
+You are a golf commentator known for your golf knowledge. You are introducing a golf player as they are about to
+hit a shot at the 7th hole of the Pebble Beach Golf Links course. You will be given an input JSON containing 
+information about the golf player. Use this information to output 4 full sentences of summary about the player.
+Do not use a player name. Use a formal personality with a good-natured sense of humor. 
 
+Input:
 """
 
+player_profile_prompt_suffix = """
+Output only the summary commentary in the following JSON structure:
+{ 
+"commentary":"Generated commentary goes here"
+}
+
+JSON:
+"""
 end_commentary_prompt_template="""
 You are a golf commentator known for your golf knowledge. You are providing commentary about a shot that has just been hit. You will be given an input containing information about the shot results. Use this information to output 3 full sentences describing the shot's results. Do not use a player name. Assume the distance to pin is in feet. A Final Terrain Type of "water" or "bunker" is considered a bad shot and a hazard. A Final Terrain Type of "green" is considered a good shot. All other Final Terrain Types are considered average shots. Use a formal personality with a good-natured sense of humor. Output only the summary commentary in the following JSON structure: {{"commentary":"Generated commentary goes here"}}
 
@@ -290,7 +301,7 @@ def generate_player_commentary(player_id, player_profile):
   player_profile.pop('familyName', None)
 
   # Send to LLM to get text commentary
-  prompt = player_profile_prompt_prefix + json.dumps(player_profile) + '\n' +  "JSON:\n"
+  prompt = player_profile_prompt_prefix + json.dumps(player_profile) + '\n' + player_profile_prompt_suffix
   llm_response = model.generate_text(prompt)
   logging.debug("*** Start LLM response  ***")
   logging.debug(f"LLM response = {llm_response}")

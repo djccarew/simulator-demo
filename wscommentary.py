@@ -115,6 +115,18 @@ JSON:
 """
 final_commentary_file = ""
 
+# Format the distance to pin for a shot in cm
+# If greater than 2743.19995 cm format as yards
+# else format as feet
+
+def format_distance_to_pin(pin_distance: float) -> str:
+    
+    if pin_distance >= 2743.19995:
+        return f"{pin_distance/91.44:.2f} yards"
+    else:
+        return f"{pin_distance/30.48:.2f} feet"
+
+
 # Delete everything in a string right after  the last occurrence og a given char
 def delete_after_last_char(string, char):
     last_index = string.rfind(char)  # Find the last index of the character
@@ -367,10 +379,9 @@ def watsonx(ws):
         logging.debug("Starting timer")
         start = time.perf_counter()
        
-       
         prompt = end_commentary_prompt_template.format(shot_shape=shot_profile['shot_shape'], 
                                                        terrain_type=shot_profile['terrain_type'],
-                                                       pin_distance=str(shot_profile['pin_distance']/30.48) + ' ft')
+                                                       pin_distance=format_distance_to_pin(shot_profile['pin_distance']))
         logging.debug("*** Start prompt ***")
         logging.debug(prompt)
         logging.debug("*** End prompt ***")

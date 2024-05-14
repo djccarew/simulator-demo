@@ -378,12 +378,12 @@ def watsonx(ws):
         logging.debug(f"Handling ws message type {payload_data['type']}")
         shot_profile = get_shot_profile(payload_data)
         init_commmentary_file = get_init_commentary_file(shot_profile)
-     
-        logging.debug(f"playing clip {init_commmentary_file}")
-        playsound(init_commmentary_file, block=False)
-
         logging.debug("Starting timer")
         start = time.perf_counter()
+        logging.debug("Wait 1 second before starting initial commentary")
+        time.sleep(1)
+        logging.debug(f"playing clip {init_commmentary_file}")
+        playsound(init_commmentary_file, block=False)
        
         prompt = end_commentary_prompt_template.format(shot_shape=shot_profile['shot_shape'], 
                                                        terrain_type=shot_profile['terrain_type'],

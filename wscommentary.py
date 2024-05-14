@@ -53,7 +53,7 @@ player_profile_model_parameters = {
 
 
 global no_processing_required_types       
-no_processing_required_types = ["ping","shot_playback_done","selected_club","game_and_environment_data","exit_match"]
+no_processing_required_types = ["ping","shot_playback_done","selected_club","exit_match"]
 
 # Final commentary file
 
@@ -363,9 +363,12 @@ def watsonx(ws):
          ws.send(f"Player commentary generating for player_id {payload_data['user_profile']['id']}")
          continue
          
-      if payload_data["type"] == "player_ready":
+      if payload_data["type"] == "game_and_environment_data":
          # Player ready to take shot , play commentary 
          logging.debug(f"Handling ws message type {payload_data['type']}")
+         logging.debug("***Start JSON payload***")
+         logging.debug(json.dumps(payload_data, indent=2))
+         logging.debug("***End JSON payload***")
          player_commentary_audio_file = 'audio/' + payload_data["user_profile"]["id"] + '.wav'
          wav_player = PlayWavFile(player_commentary_audio_file)
          wav_player.play()

@@ -355,8 +355,8 @@ def watsonx(ws):
          # Asynchronous generation of player profile
          logging.debug(f"Handling ws message type {payload_data['type']}")
          logging.debug("***Start JSON payload***")
-         logging.debug(json.dumps(payload_data))
-         logging.debug("***Start JSON payload***")
+         logging.debug(json.dumps(payload_data, indent=2))
+         logging.debug("***End JSON payload***")
          thread = multiprocessing.Process(target=generate_player_commentary, 
                                           args=(payload_data['user_profile']['apex_preferences']['intro_data'],))
          thread.start()

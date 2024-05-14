@@ -120,7 +120,7 @@ final_commentary_file = ""
 # else format as feet
 
 def format_distance_to_pin(pin_distance: float) -> str:
-    
+
     if pin_distance >= 2743.19995:
         return f"{pin_distance/91.44:.2f} yards"
     else:
@@ -354,6 +354,9 @@ def watsonx(ws):
          # Player login received
          # Asynchronous generation of player profile
          logging.debug(f"Handling ws message type {payload_data['type']}")
+         logging.debug("***Start JSON payload***")
+         logging.debug(json.dumps(payload_data))
+         logging.debug("***Start JSON payload***")
          thread = multiprocessing.Process(target=generate_player_commentary, 
                                           args=(payload_data['user_profile']['apex_preferences']['intro_data'],))
          thread.start()

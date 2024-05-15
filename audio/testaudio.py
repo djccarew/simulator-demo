@@ -1,7 +1,7 @@
 import pyaudio
 import wave
 
-filename = 'good_1.mp3'
+filename = 'good_3.mp3'
 
 # # Set chunk size of 1024 samples per data frame
 # chunk = 1024  
@@ -33,4 +33,4 @@ filename = 'good_1.mp3'
 
 from playsound import playsound
 
-playsound(filename, block=False)
+playsound(filename, block=True)

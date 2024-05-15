@@ -84,10 +84,7 @@ single_threaded_tts_service = TextToSpeechV1(authenticator=iam_authenticator)
 single_threaded_tts_service.set_service_url(os.getenv("TTS_URL"))
 
 player_profile_prompt_prefix = """
-You are a golf commentator known for your golf knowledge. You are introducing a golf player as they are about to
-hit a shot at the 7th hole of the Pebble Beach Golf Links course. You will be given an input JSON containing 
-information about the golf player. Use this information to output 4 full sentences of summary about the player.
-Do not use a player name. Use a formal personality with a good-natured sense of humor. 
+You are a golf commentator known for your golf knowledge. You are introducing a golf player as they are about to hit a shot at the 7th hole of the Pebble Beach Golf Links course. You will be given an input JSON containing information about the golf player. Use this information to output 4 full sentences of summary about the player. Do not use a player name. Use a formal personality with a good-natured sense of humor. 
 
 Input:
 """
@@ -122,9 +119,15 @@ final_commentary_file = ""
 def format_distance_to_pin(pin_distance: float) -> str:
 
     if pin_distance >= 2743.19995:
-        return f"{pin_distance/91.44:.2f} yards"
+        pin_distance_yards = f"{pin_distance/91.44:.2f}"
+        if pin_distance_yards[-1] == "0":
+            pin_distance_yards = pin_distance_yards[0:-1]
+        return pin_distance_yards + " yards"
     else:
-        return f"{pin_distance/30.48:.2f} feet"
+        pin_distance_feet = f"{pin_distance/30.48:.2f}"
+        if pin_distance_feet[-1] == "0":
+            pin_distance_feet = pin_distance_feet[0:-1]
+        return pin_distance_feet + " feet"
 
 
 # Delete everything in a string right after  the last occurrence og a given char
@@ -381,7 +384,7 @@ def watsonx(ws):
         logging.debug("Starting timer")
         start = time.perf_counter()
         logging.debug("Wait 1 second before starting initial commentary")
-        time.sleep(1)
+        time.sleep(0.5)
         logging.debug(f"playing clip {init_commmentary_file}")
         playsound(init_commmentary_file, block=False)
        

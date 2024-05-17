@@ -141,10 +141,10 @@ def format_distance_to_pin(pin_distance: float) -> str:
         return pin_distance
     if pin_distance >= 2743.19995:
         pin_distance_yards = f"{round(pin_distance/91.44)}"
-        return pin_distance_yards + " yards"
+        return "Just about " + pin_distance_yards + " yards"
     else:
         pin_distance_feet = f"{round(pin_distance/30.48)}"
-        return pin_distance_feet + " feet"
+        return "Just about " + pin_distance_feet + " feet"
 
 
 # Delete everything in a string right after  the last occurrence og a given char
@@ -178,6 +178,7 @@ def alternative_pronunciations(tts_input):
 # Simplify shot data by retaining only the fields we are using 
 def get_shot_profile(payload_data):
     shot_profile = {}
+    print(json.dumps(payload_data, indent=2))
     shot_profile['shot_shape'] = payload_data['shot_complete']['data']['shot_shape']
     shot_profile['shot_time'] = payload_data['shot_complete']['data']['segments'][-1]['points'][-1]['time']
     final_segment = payload_data['shot_complete']['data']['snapshots'][-1]
@@ -198,13 +199,10 @@ def get_init_commentary_file(shot_profile):
     random_file_number = str(random.randint(1, 7))
     if shot_profile['terrain_type'] == "green":
         return f"audio/{tts_voice}/good_{random_file_number}.mp3"
-    elif shot_profile['terrain_type'] == "water" or shot_profile['terrain_type'] == "default":
-        random_file_number = str(random.randint(1, 6))
-        return f"audio/{tts_voice}/water_default_{random_file_number}.mp3"
     elif shot_profile['terrain_type'] == "tee_box":
         random_file_number = str(random.randint(1, 3))
         return f"audio/{tts_voice}/tee_box_{random_file_number}.mp3"
-    elif shot_profile['pin_distance'] >= 2743.19:
+    elif shot_profile['terrain_type'] != "water" and shot_profile['terrain_type'] != "default" and shot_profile['shot_time'] < 5 and shot_profile['pin_distance'] >= 2743.19:
         random_file_number = str(random.randint(1, 5))
         return f"audio/{tts_voice}/short_{random_file_number}.mp3"
     return f"audio/{tts_voice}/average_{random_file_number}.mp3"

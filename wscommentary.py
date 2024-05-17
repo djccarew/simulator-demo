@@ -409,6 +409,7 @@ def watsonx(ws):
       elif payload_data["type"] == "shot_data": 
         logging.debug(f"Handling ws message type {payload_data['type']}")
         shot_profile = get_shot_profile(payload_data)
+        logging.debug(json.dumps(shot_profile, indent=2))
         init_commmentary_file = get_init_commentary_file(shot_profile)
         logging.debug("Starting timer")
         start = time.perf_counter()

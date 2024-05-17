@@ -362,7 +362,7 @@ def generate_player_commentary(player_profile):
   local_start = time.perf_counter()
   multi_threaded_tts_service.synthesize_using_websocket(ssml_enhanced,  
                                                         multi_threaded_tts_callback_file,
-                                                        customization_id="9d5f9f9d-ae4c-4554-807c-51ed33e1792a",                                 
+                                                        customization_id=customization_id,                                 
                                                         accept='audio/wav',
                                                         voice=tts_voice)
   local_stop = time.perf_counter()
@@ -441,7 +441,7 @@ def watsonx(ws):
         logging.debug(f"Starting end commentary with {time_to_shot_complete} secs before shot complete")                   
         single_threaded_tts_service.synthesize_using_websocket(response_dict["commentary"],
                                                                tts_callback_live,
-                                                               customization_id="9d5f9f9d-ae4c-4554-807c-51ed33e1792a",
+                                                               customization_id=customization_id,
                                                                accept='audio/wav',
                                                                voice=tts_voice)
                                             

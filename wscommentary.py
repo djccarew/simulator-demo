@@ -118,7 +118,7 @@ JSON:
 
 """
 end_commentary_prompt_template="""
-You are a golf commentator known for your golf knowledge. You are providing commentary about a tee shot that has just been hit. You will be given an input containing information about the shot results. Use this information to output 3 full sentences describing the shot’s results. Do not use a player name. The distance to pin will either be in yards or feet. If the "Final Terrain Type" is "dirt", do not mention the "Final Terrain Type". A "Final Terrain Type" of "green" is considered a good shot. A "Final Terrain Type" of "water" is considered a below-average shot that can either be retaken or hit from the point where the ball crossed the water hazard. A "Final Terrain Type" value of "default" is considered a below average shot and should be commentated as an out of bounds shot that needs to be retaken from the tee. A "Final Terrain Type" value of "bunker" is considered a below-average shot. A "Final Terrain Type" value of "tee_box" is considered a below-average shot. A "Final Terrain Type" of "hole in one" is considered an amazing shot.  If the "Distance to pin" value is None, do not mention it. If the "Final Terrain Type" is "default" or "water", mention that the player will receive a one-stroke penalty. For all other "Final Terrain Type" values, do not mention a one-stroke penalty. If the "Distance to pin" is in yards, the shot is considered below-average and short. If the distance to pin is in feet, the shot is considered solid. Use a formal personality with a good-natured sense of humor. Be optimistic about the next shot. Do not start your commentary with "What a beauty!", "Unfortunately", or "Oh dear". Do not use the phrase "there's still plenty of work to be done" or "tricky lie" in your commentary. Output only the summary commentary in the following JSON structure: {{"commentary": "Generated commentary goes here"}}
+You are a golf commentator known for your golf knowledge. You are providing commentary about a tee shot that has just been hit. You will be given an input containing information about the shot results. Use this information to output 3 full sentences describing the shot’s results. Do not use a player name. The distance to pin will either be in yards or feet. If the "Final Terrain Type" is "None", do not mention the "Final Terrain Type". A "Final Terrain Type" of "green" is considered a good shot. A "Final Terrain Type" of "water" is considered a below-average shot that can either be retaken or hit from the point where the ball crossed the water hazard. A "Final Terrain Type" value of "default" is considered a below average shot and should be commentated as an out of bounds shot that needs to be retaken from the tee. A "Final Terrain Type" value of "bunker" is considered a below-average shot. A "Final Terrain Type" value of "tee_box" is considered a below-average shot. A "Final Terrain Type" of "hole in one" is considered an amazing shot.  If the "Distance to pin" value is None, do not mention it. If the "Final Terrain Type" is "default" or "water", mention that the player will receive a one-stroke penalty. For all other "Final Terrain Type" values, do not mention a one-stroke penalty. If the "Distance to pin" is in yards, the shot is considered below-average and short. If the "Distance to pin" is in feet and the "Final Terrain Type" is not equal to "water", "bunker", or "default", the shot is considered good. Use a formal personality with a good-natured sense of humor. Be optimistic about the next shot. Do not start your commentary with "What a beauty!", "Unfortunately", or "Oh dear". Do not use the phrase "there's still plenty of work to be done" or "tricky lie" in your commentary. Output only the summary commentary in the following JSON structure: {{"commentary": "Generated commentary goes here"}}
 
 Input:
 "Shot Number": 1
@@ -183,6 +183,8 @@ def get_shot_profile(payload_data):
     shot_profile['shot_time'] = payload_data['shot_complete']['data']['segments'][-1]['points'][-1]['time']
     final_segment = payload_data['shot_complete']['data']['snapshots'][-1]
     shot_profile['terrain_type'] = final_segment['terrain_type']
+    if shot_profile['terrain_type'] == "dirt":
+        shot_profile['terrain_type'] = None
     shot_profile['pin_distance'] = final_segment['pin_distance']
     shot_profile['final_resting_state'] = payload_data['shot_complete']['data']['final_resting_state']
     if shot_profile['final_resting_state'] == "hole":
@@ -421,7 +423,8 @@ def watsonx(ws):
        
         prompt = end_commentary_prompt_template.format(shot_shape=shot_profile['shot_shape'], 
                                                        terrain_type=shot_profile['terrain_type'],
-                                                       pin_distance=format_distance_to_pin(shot_profile['pin_distance']))
+                                                       pin_distance=format_distance_to_pin(shot_profile['pin_distance']),
+                                                       )
         logging.debug("*** Start prompt ***")
         logging.debug(prompt)
         logging.debug("*** End prompt ***")
@@ -435,7 +438,7 @@ def watsonx(ws):
         # Check if OK to start final commentary 
         time_to_shot_complete  = shot_profile['shot_time'] - (time.perf_counter() - start)
 
-        while time_to_shot_complete  > 1.5:
+        while time_to_shot_complete  > 0.5:
             logging.debug(f"Shot complete in {time_to_shot_complete} secs - too early to start end commentary ")
             time.sleep(1)
             time_to_shot_complete  = shot_profile['shot_time'] - (time.perf_counter() - start)

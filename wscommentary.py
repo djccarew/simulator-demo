@@ -356,7 +356,6 @@ def generate_player_commentary(player_profile):
   player_profile.pop('givenName', None)
   player_profile.pop('displayName', None)
   player_profile.pop('familyName', None)
-  player_profile.pop('speakName', None)
   player_profile.pop('playedPebbleBeach', None)
 
   # Send to LLM to get text commentary
@@ -440,8 +439,9 @@ def watsonx(ws):
         logging.debug("*** End prompt ***")
         llm_response = single_threaded_model.generate_text(prompt)
         response_dict = json.loads(delete_after_last_char(llm_response, '}'))
-        response_dict["commentary"] = response_dict["commentary"].replace("[The input was rejected as inappropriate]", "")
-        response_dict["commentary"] = response_dict["commentary"].replace("[Potentially harmful text removed]", "")
+        ssml_enhanced = enhance_with_SSML(response_dict['commentary'])
+        ssml_enhanced = ssml_enhanced.replace("[The input was rejected as inappropriate]", "")
+        ssml_enhanced = ssml_enhanced.replace("[Potentially harmful text removed]", "")
        
         logging.debug("*** Start LLM response  ***")
         logging.debug(llm_response)
@@ -456,7 +456,7 @@ def watsonx(ws):
             time_to_shot_complete  = shot_profile['shot_time'] - (time.perf_counter() - start)
 
         logging.debug(f"Starting end commentary with {time_to_shot_complete} secs before shot complete")                   
-        single_threaded_tts_service.synthesize_using_websocket(response_dict["commentary"],
+        single_threaded_tts_service.synthesize_using_websocket(ssml_enhanced,
                                                                tts_callback_live,
                                                                customization_id=customization_id,
                                                                accept='audio/wav',

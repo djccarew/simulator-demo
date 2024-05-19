@@ -369,6 +369,8 @@ def generate_player_commentary(player_profile):
 
   logging.debug("Synthesizing player commentary ...")
   ssml_enhanced = enhance_with_SSML(response_dict['commentary'])
+  ssml_enhanced = ssml_enhanced.replace("[The input was rejected as inappropriate]", "")
+  ssml_enhanced = ssml_enhanced.replace("[Potentially harmful text removed]", "")
   logging.debug(f"SSML enhanced commentary = {ssml_enhanced}")
   local_start = time.perf_counter()
   multi_threaded_tts_service.synthesize_using_websocket(ssml_enhanced,  
@@ -438,6 +440,8 @@ def watsonx(ws):
         logging.debug("*** End prompt ***")
         llm_response = single_threaded_model.generate_text(prompt)
         response_dict = json.loads(delete_after_last_char(llm_response, '}'))
+        response_dict["commentary"] = response_dict["commentary"].replace("[The input was rejected as inappropriate]", "")
+        response_dict["commentary"] = response_dict["commentary"].replace("[Potentially harmful text removed]", "")
        
         logging.debug("*** Start LLM response  ***")
         logging.debug(llm_response)

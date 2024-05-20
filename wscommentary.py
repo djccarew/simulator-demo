@@ -159,7 +159,7 @@ def enhance_with_SSML(text)->str:
     # For now just avoiding run ons where you expect a break 
    
     local_text = text.replace(' - ','<break strength="weak"/>')
-    local_text = local_text.replace('...','<break strength="weak"/>')
+    #local_text = local_text.replace('...','<break strength="weak"/>')
 
     return local_text
 
@@ -177,7 +177,7 @@ def alternative_pronunciations(tts_input):
 # Simplify shot data by retaining only the fields we are using 
 def get_shot_profile(payload_data):
     shot_profile = {}
-    print(json.dumps(payload_data, indent=2))
+    #print(json.dumps(payload_data, indent=2))
     shot_profile['shot_shape'] = payload_data['shot_complete']['data']['shot_shape']
     shot_profile['shot_time'] = payload_data['shot_complete']['data']['segments'][-1]['points'][-1]['time']
     final_segment = payload_data['shot_complete']['data']['snapshots'][-1]
@@ -206,7 +206,7 @@ def get_shot_profile(payload_data):
 # Returns init commentary file based on shot profile
 def get_init_commentary_file(shot_profile):
     random_file_number = str(random.randint(1, 7))
-    if shot_profile['terrain_type'] == "green":
+    if shot_profile['terrain_type'] == "green" or shot_profile['terrain_type'] == "hole in one":
         return f"audio/{tts_voice}/good_{random_file_number}.mp3"
     elif shot_profile['terrain_type'] == "tee_box":
         random_file_number = str(random.randint(1, 3))
@@ -357,6 +357,8 @@ def generate_player_commentary(player_profile):
   player_profile.pop('displayName', None)
   player_profile.pop('familyName', None)
   player_profile.pop('playedPebbleBeach', None)
+  if player_profile['shotTendency'] == "Who knows":
+      player_profile['shotTendency'] = None
 
   # Send to LLM to get text commentary
   prompt = player_profile_prompt_prefix + json.dumps(player_profile) + '\n' + player_profile_prompt_suffix
